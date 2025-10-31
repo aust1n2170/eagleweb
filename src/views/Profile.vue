@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
+import { gsap } from 'gsap'
 import { supabase } from '../lib/supabase'
 import { useRouter } from 'vue-router'
 import AuthModal from '../components/AuthModal.vue'
@@ -12,43 +13,24 @@ const lastName = ref('')
 const loading = ref(false)
 const saving = ref(false)
 const saveMessage = ref('')
+const copySuccess = ref(false)
+const copyButtonRef = ref(null)
+const copyCheckRef = ref(null)
+
 
 onMounted(() => {
   checkUser()
   
   // Listen for auth state changes
-  supabase.auth.onAuthStateChange(async (_event, session) => {
+  supabase.auth.onAuthStateChange((_event, session) => {
     user.value = session?.user ?? null
     if (!user.value) {
       // Redirect to home if not logged in
       router.push('/')
     } else {
-      // Refresh user data to get latest metadata
-      const { data } = await supabase.auth.getUser()
-      if (data?.user) {
-        user.value = data.user
-      }
       loadProfile()
     }
   })
-})
-
-// Computed property to get display name
-const displayName = computed(() => {
-  if (!user.value) return ''
-  
-  const firstName = user.value.user_metadata?.first_name
-  const lastName = user.value.user_metadata?.last_name
-  
-  if (firstName && lastName) {
-    return `${firstName} ${lastName}`
-  } else if (firstName) {
-    return firstName
-  } else if (lastName) {
-    return lastName
-  } else {
-    return user.value.email || ''
-  }
 })
 
 const checkUser = async () => {
@@ -112,9 +94,6 @@ const saveProfile = async () => {
     // Update local user object
     if (data.user) {
       user.value = data.user
-      // Update form fields with saved values
-      firstName.value = data.user.user_metadata?.first_name || ''
-      lastName.value = data.user.user_metadata?.last_name || ''
     }
     
     saveMessage.value = 'Profile saved successfully!'
@@ -140,6 +119,61 @@ const handleLogout = async () => {
     router.push('/')
   }
 }
+
+const copyUserId = async () => {
+  if (!user.value?.id) return
+  
+  try {
+    await navigator.clipboard.writeText(user.value.id)
+    copySuccess.value = true
+    
+    // Animate success
+    nextTick(() => {
+      animateCopySuccess()
+    })
+    
+    // Reset after animation
+    setTimeout(() => {
+      copySuccess.value = false
+    }, 2000)
+  } catch (error) {
+    console.error('Failed to copy:', error)
+  }
+}
+
+const animateCopySuccess = () => {
+  if (!copyButtonRef.value || !copyCheckRef.value) return
+  
+  const tl = gsap.timeline()
+  
+  // Animate checkmark appearance
+  tl.fromTo(copyCheckRef.value,
+    {
+      scale: 0,
+      rotation: -180,
+      opacity: 0
+    },
+    {
+      scale: 1,
+      rotation: 0,
+      opacity: 1,
+      duration: 0.4,
+      ease: 'back.out(1.7)'
+    }
+  )
+  
+  // Slight bounce effect
+  .to(copyCheckRef.value,
+    {
+      scale: 1.2,
+      duration: 0.15,
+      yoyo: true,
+      repeat: 1,
+      ease: 'power2.inOut'
+    },
+    '-=0.2'
+  )
+}
 </script>
 
 <template>
@@ -148,7 +182,7 @@ const handleLogout = async () => {
       <img src="/AppIcon.png" alt="Logo" class="logo" @click="router.push('/')" style="cursor: pointer;" />
       <div class="nav-buttons">
         <div v-if="user" class="user-info">
-          <router-link to="/profile" class="user-email">{{ displayName }}</router-link>
+          <router-link to="/profile" class="user-email">{{ user.email }}</router-link>
           <button class="nav-button logout" @click="handleLogout">Log out</button>
         </div>
       </div>
@@ -167,9 +201,29 @@ const handleLogout = async () => {
             </div>
             <div class="info-item">
               <label>User ID:</label>
-              <span class="user-id">{{ user.id }}</span>
+              <div class="user-id-container">
+                <span class="user-id">{{ user.id }}</span>
+                <button 
+                  ref="copyButtonRef"
+                  class="copy-button" 
+                  @click="copyUserId"
+                  :class="{ 'copy-success': copySuccess }"
+                  title="Copy to clipboard"
+                >
+                  <svg v-if="!copySuccess" class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <svg v-else ref="copyCheckRef" class="copy-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M20 6L9 17l-5-5"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
+          <router-link to="/change-password" class="change-password-link">
+            Change Password
+          </router-link>
         </div>
         
         <div class="profile-section">
@@ -287,10 +341,64 @@ const handleLogout = async () => {
   font-size: 1.1rem;
 }
 
+.user-id-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .user-id {
   font-family: monospace;
   font-size: 0.9rem;
   word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+
+.copy-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+}
+
+.copy-button:hover {
+  background-color: #f5f5f5;
+  border-color: #000;
+}
+
+.copy-button.copy-success {
+  background-color: #4caf50;
+  border-color: #4caf50;
+}
+
+.copy-icon,
+.copy-check {
+  width: 18px;
+  height: 18px;
+  stroke: #666;
+  transition: stroke 0.2s;
+}
+
+.copy-button:hover .copy-icon {
+  stroke: #000;
+}
+
+.copy-button.copy-success .copy-check {
+  stroke: #fff;
+}
+
+.copy-button:active {
+  transform: scale(0.95);
 }
 
 .profile-form {
@@ -378,6 +486,23 @@ const handleLogout = async () => {
   text-align: center;
   padding: 3rem;
   color: #666;
+}
+
+.change-password-link {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #000;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.change-password-link:hover {
+  background-color: #333;
 }
 </style>
 

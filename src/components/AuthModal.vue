@@ -21,6 +21,8 @@ const password = ref('')
 const loading = ref(false)
 const success = ref(false)
 const error = ref('')
+const forgotPasswordMode = ref(false)
+const resetEmailSent = ref(false)
 
 // Template refs for GSAP animations
 const modalOverlay = ref(null)
@@ -39,20 +41,8 @@ const handleSubmit = async () => {
     return
   }
 
-  // Reset any previous states
-  error.value = ''
   loading.value = true
-  success.value = false
-
-  // Set a timeout to prevent infinite loading
-  const timeoutId = setTimeout(() => {
-    if (loading.value) {
-      console.error('Login timeout - request took too long')
-      loading.value = false
-      error.value = 'Request timed out. Please check your internet connection and try again.'
-      animateError()
-    }
-  }, 30000) // 30 second timeout
+  error.value = ''
 
   try {
     if (props.mode === 'signup') {
@@ -61,19 +51,9 @@ const handleSubmit = async () => {
         password: password.value
       })
       
-      if (signUpError) {
-        clearTimeout(timeoutId)
-        console.error('Signup error:', signUpError)
-        throw signUpError
-      }
+      if (signUpError) throw signUpError
       
-      clearTimeout(timeoutId)
-      
-      if (data && data.user) {
-        emit('success', { message: 'Account created! Please check your email to verify your account.' })
-        resetForm()
-      } else {
-        // Signup might succeed even without immediate user (email confirmation required)
+      if (data.user) {
         emit('success', { message: 'Account created! Please check your email to verify your account.' })
         resetForm()
       }
@@ -83,57 +63,75 @@ const handleSubmit = async () => {
         password: password.value
       })
       
-      if (signInError) {
-        console.error('Login error:', signInError)
-        throw signInError
-      }
+      if (signInError) throw signInError
       
-      if (!data || !data.user) {
-        clearTimeout(timeoutId)
-        console.error('Login failed: No user data returned')
-        loading.value = false
-        throw new Error('Login failed. Please try again.')
-      }
-      
-      clearTimeout(timeoutId)
-      // IMPORTANT: Reset loading state FIRST
-      loading.value = false
-      // Clear form immediately
-      resetForm()
-      // Set success state - v-show will hide form instantly
-      success.value = true
-      
-      console.log('Login successful, showing success animation')
-      
-      // Show success animation immediately
-      nextTick(() => {
-        if (success.value) {
+      if (data.user) {
+        // Clear form immediately
+        resetForm()
+        // Set success state - v-show will hide form instantly
+        success.value = true
+        // Show success animation immediately
+        nextTick(() => {
           animateSuccess()
-        }
-        // Close modal after success animation
-        setTimeout(() => {
-          if (success.value) {
+          // Close modal after success animation
+          setTimeout(() => {
             emit('success', { message: 'Logged in successfully!' })
-          }
-          // Keep success state true until modal is fully closed
-          // This prevents form from showing again
-        }, 2000)
-      })
+            // Keep success state true until modal is fully closed
+            // This prevents form from showing again
+          }, 2000)
+        })
+      }
     }
   } catch (err) {
-    console.error('Login error:', err)
-    clearTimeout(timeoutId)
-    error.value = err.message || 'An error occurred. Please check your credentials and try again.'
-    loading.value = false
+    error.value = err.message || 'An error occurred'
     // Animate error shake with GSAP
     nextTick(() => {
       animateError()
     })
   } finally {
-    // Ensure loading is reset even if something goes wrong
-    clearTimeout(timeoutId)
     loading.value = false
   }
+}
+
+const handleForgotPassword = async () => {
+  if (!email.value) {
+    error.value = 'Please enter your email address'
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+
+  try {
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.value, {
+      redirectTo: `${window.location.origin}/reset-password`
+    })
+    
+    if (resetError) throw resetError
+    
+    resetEmailSent.value = true
+    error.value = ''
+  } catch (err) {
+    error.value = err.message || 'An error occurred'
+    nextTick(() => {
+      animateError()
+    })
+  } finally {
+    loading.value = false
+  }
+}
+
+const showForgotPassword = () => {
+  forgotPasswordMode.value = true
+  password.value = ''
+  error.value = ''
+  resetEmailSent.value = false
+}
+
+const backToLogin = () => {
+  forgotPasswordMode.value = false
+  resetEmailSent.value = false
+  error.value = ''
 }
 
 // GSAP Animation Functions
@@ -305,6 +303,8 @@ const resetForm = () => {
   email.value = ''
   password.value = ''
   error.value = ''
+  forgotPasswordMode.value = false
+  resetEmailSent.value = false
 }
 
 const closeModal = () => {
@@ -325,8 +325,10 @@ watch(() => props.isOpen, (isOpen) => {
   if (isOpen) {
     document.addEventListener('keydown', handleKeydown)
     document.body.style.overflow = 'hidden'
-    // Reset success state when modal opens
+    // Reset success state and forgot password mode when modal opens
     success.value = false
+    forgotPasswordMode.value = false
+    resetEmailSent.value = false
     // Animate modal in with GSAP
     nextTick(() => {
       animateModalIn()
@@ -361,9 +363,57 @@ onBeforeUnmount(() => {
     <div ref="modalContent" class="modal-content">
       <button class="close-button" @click="closeModal">&times;</button>
       
-      <h2>{{ mode === 'login' ? 'Log in' : 'Sign up' }}</h2>
+      <h2>
+        <span v-if="forgotPasswordMode && mode === 'login'">Reset Password</span>
+        <span v-else>{{ mode === 'login' ? 'Log in' : 'Sign up' }}</span>
+      </h2>
       
-      <form @submit.prevent="handleSubmit">
+      <!-- Forgot Password View -->
+      <div v-if="forgotPasswordMode && mode === 'login' && !resetEmailSent">
+        <form @submit.prevent="handleForgotPassword" class="forgot-password-form">
+          <div class="form-group">
+            <label for="forgot-email">Email</label>
+            <input
+              id="forgot-email"
+              v-model="email"
+              type="email"
+              placeholder="Enter your email"
+              required
+              autocomplete="email"
+            />
+          </div>
+          
+          <div v-if="error" ref="errorMessage" class="error-message">{{ error }}</div>
+          
+          <button type="submit" class="submit-button" :disabled="loading">
+            <span v-if="loading" class="button-content">
+              <span class="spinner"></span>
+              <span>Sending...</span>
+            </span>
+            <span v-else class="button-content">
+              Send Reset Link
+            </span>
+          </button>
+          
+          <button type="button" class="back-button" @click="backToLogin">
+            Back to Log in
+          </button>
+        </form>
+      </div>
+      
+      <!-- Reset Email Sent Success View -->
+      <div v-else-if="forgotPasswordMode && mode === 'login' && resetEmailSent" class="reset-success">
+        <div class="success-icon">✓</div>
+        <h3>Check Your Email</h3>
+        <p>We've sent a password reset link to <strong>{{ email }}</strong></p>
+        <p class="helper-text">Please check your inbox and follow the instructions to reset your password.</p>
+        <button type="button" class="back-button" @click="backToLogin">
+          Back to Log in
+        </button>
+      </div>
+      
+      <!-- Regular Login/Signup View -->
+      <form v-else @submit.prevent="handleSubmit">
         <div v-show="!(success && mode === 'login')" ref="formWrapper">
           <div ref="el => formGroups[0] = el" class="form-group">
             <label for="email">Email</label>
@@ -387,6 +437,9 @@ onBeforeUnmount(() => {
               required
               autocomplete="current-password"
             />
+            <a v-if="mode === 'login'" href="#" class="forgot-password-link" @click.prevent="showForgotPassword">
+              Forgot password?
+            </a>
           </div>
           
           <div v-if="error" ref="errorMessage" class="error-message">{{ error }}</div>
@@ -403,9 +456,9 @@ onBeforeUnmount(() => {
         </div>
         
         <button v-show="!(success && mode === 'login')" type="submit" class="submit-button" :disabled="loading || success">
-          <span v-if="loading && !success" class="button-content">
+          <span v-if="loading" class="button-content">
             <span class="spinner"></span>
-            <span>{{ mode === 'login' ? 'Logging in...' : 'Signing up...' }}</span>
+            <span>Logging in...</span>
           </span>
           <span v-else class="button-content">
             {{ mode === 'login' ? 'Log in' : 'Sign up' }}
@@ -617,5 +670,90 @@ onBeforeUnmount(() => {
 }
 
 /* Error message shake animation handled by GSAP */
+
+.forgot-password-link {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #666;
+  text-decoration: none;
+  text-align: right;
+  transition: color 0.2s;
+}
+
+.forgot-password-link:hover {
+  color: #000;
+  text-decoration: underline;
+}
+
+.forgot-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.back-button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+}
+
+.back-button:hover {
+  background-color: #f5f5f5;
+  border-color: #000;
+  color: #000;
+}
+
+.reset-success {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.success-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1.5rem;
+  background-color: #4caf50;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.reset-success h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  color: #000;
+  font-weight: 600;
+}
+
+.reset-success p {
+  margin: 0.5rem 0;
+  color: #333;
+  line-height: 1.6;
+}
+
+.reset-success p strong {
+  color: #000;
+  font-weight: 600;
+}
+
+.helper-text {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
 </style>
 
