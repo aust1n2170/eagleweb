@@ -2,13 +2,24 @@
 import { ref, onMounted } from 'vue'
 import { supabase } from '../lib/supabase'
 import AuthModal from '../components/AuthModal.vue'
+import DiningHallsList from '../components/DiningHallsList.vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const user = ref(null)
 const authModalOpen = ref(false)
 const authModalMode = ref('login')
-const successMessage = ref('')
+
+const allHalls = [
+  "Lower Live",
+  "Carney's",
+  "Stuart Hall",
+  "Lyons Hall",
+  "Addies",
+  "Eagles Nest",
+  "Brookline Dining",
+  "Hillside"
+]
 
 onMounted(() => {
   checkUser()
@@ -24,34 +35,28 @@ const checkUser = async () => {
   user.value = session?.user ?? null
 }
 
+const selectHall = (hall) => {
+  // Navigate to the dining hall route
+  router.push(`/hall/${encodeURIComponent(hall)}`)
+}
+
 const openLoginModal = () => {
   authModalMode.value = 'login'
   authModalOpen.value = true
-  successMessage.value = ''
 }
 
 const openSignupModal = () => {
   authModalMode.value = 'signup'
   authModalOpen.value = true
-  successMessage.value = ''
 }
 
 const closeAuthModal = () => {
   authModalOpen.value = false
-  successMessage.value = ''
 }
 
 const handleAuthSuccess = (data) => {
-  successMessage.value = data.message
-  if (authModalMode.value === 'login') {
-    setTimeout(() => {
-      closeAuthModal()
-    }, 1500)
-  } else {
-    setTimeout(() => {
-      closeAuthModal()
-    }, 3000)
-  }
+  closeAuthModal()
+  checkUser()
 }
 
 const handleLogout = async () => {
@@ -60,13 +65,9 @@ const handleLogout = async () => {
     console.error('Error signing out:', error)
   } else {
     user.value = null
-    successMessage.value = 'Logged out successfully'
-    setTimeout(() => {
-      successMessage.value = ''
-    }, 3000)
+    router.push('/')
   }
 }
-
 </script>
 
 <template>
@@ -87,13 +88,11 @@ const handleLogout = async () => {
     </div>
   </nav>
   
-  <main class="home-content">
-    <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
-    
-    <!-- Landing Page -->
-    <div class="landing-page">
-      <h1 class="landing-title">Eagle Eats</h1>
-    </div>
+  <main class="browse-content">
+    <DiningHallsList
+      :halls="allHalls"
+      @select-hall="selectHall"
+    />
   </main>
   
   <AuthModal
@@ -105,6 +104,12 @@ const handleLogout = async () => {
 </template>
 
 <style scoped>
+.browse-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
 .nav-link {
   color: #ffffff;
   text-decoration: none;
@@ -131,39 +136,5 @@ const handleLogout = async () => {
 .user-email:hover {
   opacity: 0.8;
   text-decoration: underline;
-}
-
-.home-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.landing-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 160px);
-  text-align: center;
-}
-
-.landing-title {
-  font-size: 6rem;
-  font-weight: 600;
-  color: #000;
-  margin: 0;
-  font-family: "SubVario OT W03 Medium", sans-serif;
-}
-
-@media (max-width: 768px) {
-  .landing-title {
-    font-size: 4rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .landing-title {
-    font-size: 3rem;
-  }
 }
 </style>

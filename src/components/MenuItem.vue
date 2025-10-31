@@ -1,5 +1,9 @@
 <script setup>
-defineProps({
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const props = defineProps({
   item: {
     type: Object,
     required: true
@@ -9,10 +13,16 @@ defineProps({
 const getItemName = (item) => {
   return item.recipe_print_as_name || item.recipe_name || 'Menu Item'
 }
+
+const handleClick = () => {
+  if (props.item.recipe_number) {
+    router.push(`/dish/${props.item.recipe_number}`)
+  }
+}
 </script>
 
 <template>
-  <div class="menu-item">
+  <div class="menu-item" @click="handleClick">
     <div class="item-name">
       {{ getItemName(item) }}
     </div>
@@ -46,11 +56,16 @@ const getItemName = (item) => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
 }
 
 .menu-item:hover {
   border-color: #000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  z-index: 10;
 }
 
 .item-name {
@@ -77,7 +92,7 @@ const getItemName = (item) => {
 .item-price {
   font-size: 1rem;
   font-weight: 600;
-  color: #000;
+  color: #4caf50;
   margin-top: 0.25rem;
 }
 </style>

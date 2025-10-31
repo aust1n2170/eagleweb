@@ -34,10 +34,27 @@ body {
   justify-content: space-between;
 }
 
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
 .logo {
   height: 40px;
   width: auto;
   border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, scale 0.2s ease;
+  transform-origin: center;
+}
+
+.logo:hover {
+  transform: scale(1.05) translateY(-2px);
+}
+
+.logo:active {
+  transform: scale(0.98);
 }
 
 .nav-buttons {
@@ -171,6 +188,26 @@ body {
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+/* Global button hover animation for all buttons except back buttons */
+button:not(.back-button):not(.back-nav-button):not(.back-button-nav),
+a.change-password-link,
+a.back-link {
+  transition: transform 0.2s ease, scale 0.2s ease;
+  transform-origin: center;
+}
+
+button:not(.back-button):not(.back-nav-button):not(.back-button-nav):hover,
+a.change-password-link:hover,
+a.back-link:hover {
+  transform: scale(1.05) translateY(-2px);
+}
+
+button:not(.back-button):not(.back-nav-button):not(.back-button-nav):active,
+a.change-password-link:active,
+a.back-link:active {
+  transform: scale(0.98);
 }
 
 #app {

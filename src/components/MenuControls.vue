@@ -1,5 +1,5 @@
 <script setup>
-defineProps({
+const props = defineProps({
   selectedDate: {
     type: String,
     required: true
@@ -11,10 +11,18 @@ defineProps({
   meals: {
     type: Array,
     required: true
+  },
+  sortBy: {
+    type: String,
+    default: 'price'
+  },
+  sortDirection: {
+    type: String,
+    default: 'desc'
   }
 })
 
-const emit = defineEmits(['update:selectedDate', 'update:selectedMeal', 'dateChange', 'mealChange'])
+const emit = defineEmits(['update:selectedDate', 'update:selectedMeal', 'dateChange', 'mealChange', 'sortToggle'])
 
 const handleDateChange = (event) => {
   emit('update:selectedDate', event.target.value)
@@ -24,6 +32,25 @@ const handleDateChange = (event) => {
 const handleMealClick = (mealValue) => {
   emit('update:selectedMeal', mealValue)
   emit('mealChange', mealValue)
+}
+
+const sortOptions = [
+  { value: 'price', label: 'Price' },
+  { value: 'protein-calorie-ratio', label: 'Protein to Calorie Ratio' },
+  { value: 'protein', label: 'Protein' },
+  { value: 'calories', label: 'Calories' }
+]
+
+const handleSortClick = (sortValue) => {
+  emit('sortToggle', sortValue)
+}
+
+const getSortLabel = (option) => {
+  if (props.sortBy === option.value) {
+    const direction = props.sortDirection === 'desc' ? '↓' : '↑'
+    return `${option.label} ${direction}`
+  }
+  return option.label
 }
 </script>
 
@@ -51,6 +78,21 @@ const handleMealClick = (mealValue) => {
           @click="handleMealClick(meal.value)"
         >
           {{ meal.label }}
+        </button>
+      </div>
+    </div>
+    
+    <div class="control-group">
+      <label>Sort by:</label>
+      <div class="sort-picker">
+        <button
+          v-for="option in sortOptions"
+          :key="option.value"
+          class="sort-button"
+          :class="{ active: sortBy === option.value }"
+          @click="handleSortClick(option.value)"
+        >
+          {{ getSortLabel(option) }}
         </button>
       </div>
     </div>
@@ -125,16 +167,48 @@ const handleMealClick = (mealValue) => {
   border-color: #000;
 }
 
+.sort-picker {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.sort-button {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #000;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sort-button:hover {
+  border-color: #000;
+  background-color: #f5f5f5;
+}
+
+.sort-button.active {
+  background-color: #000;
+  color: #fff;
+  border-color: #000;
+}
+
 @media (max-width: 768px) {
   .menu-controls {
     padding: 1rem;
   }
   
-  .meal-picker {
+  .meal-picker,
+  .sort-picker {
     flex-direction: column;
   }
   
-  .meal-button {
+  .meal-button,
+  .sort-button {
     width: 100%;
   }
 }

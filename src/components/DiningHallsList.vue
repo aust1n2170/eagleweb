@@ -1,4 +1,8 @@
 <script setup>
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
 defineProps({
   halls: {
     type: Array,
@@ -7,6 +11,11 @@ defineProps({
 })
 
 const emit = defineEmits(['selectHall'])
+
+const selectHall = (hall) => {
+  // Navigate to the dining hall route
+  router.push(`/hall/${encodeURIComponent(hall)}`)
+}
 </script>
 
 <template>
@@ -17,7 +26,7 @@ const emit = defineEmits(['selectHall'])
         v-for="hall in halls" 
         :key="hall" 
         class="hall-card"
-        @click="emit('selectHall', hall)"
+        @click="selectHall(hall)"
       >
         {{ hall }}
       </div>

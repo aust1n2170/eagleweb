@@ -127,6 +127,9 @@ nextTick(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  position: relative;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .category-header {
@@ -139,6 +142,8 @@ nextTick(() => {
   cursor: pointer;
   text-align: left;
   transition: opacity 0.2s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .category-header:hover {
@@ -153,6 +158,7 @@ nextTick(() => {
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #000;
   flex: 1;
+  font-family: "SubVario OT W03 Medium", sans-serif;
 }
 
 .collapse-icon {
@@ -172,7 +178,9 @@ nextTick(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
-  overflow: hidden;
+  overflow: visible;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 @media (max-width: 768px) {

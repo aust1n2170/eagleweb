@@ -85,7 +85,12 @@ const handleResetPassword = async () => {
 <template>
   <div class="reset-password-page">
     <nav class="navbar">
-      <img src="/AppIcon.png" alt="Logo" class="logo" @click="router.push('/')" style="cursor: pointer;" />
+      <div class="navbar-left">
+        <img src="/AppIcon.png" alt="Logo" class="logo" @click="router.push('/')" style="cursor: pointer;" />
+        <router-link to="/browse" class="nav-link">Browse Dining Halls</router-link>
+      </div>
+      <div class="nav-buttons">
+      </div>
     </nav>
     
     <main class="reset-content">
@@ -147,6 +152,21 @@ const handleResetPassword = async () => {
 </template>
 
 <style scoped>
+.nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  text-decoration: underline;
+}
+
 .reset-password-page {
   min-height: 100vh;
   background-color: #ffffff;

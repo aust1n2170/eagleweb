@@ -179,7 +179,10 @@ const animateCopySuccess = () => {
 <template>
   <div class="profile-page">
     <nav class="navbar">
-      <img src="/AppIcon.png" alt="Logo" class="logo" @click="router.push('/')" style="cursor: pointer;" />
+      <div class="navbar-left">
+        <img src="/AppIcon.png" alt="Logo" class="logo" @click="router.push('/')" style="cursor: pointer;" />
+        <router-link to="/browse" class="nav-link">Browse Dining Halls</router-link>
+      </div>
       <div class="nav-buttons">
         <div v-if="user" class="user-info">
           <router-link to="/profile" class="user-email">{{ user.email }}</router-link>
@@ -279,6 +282,21 @@ const animateCopySuccess = () => {
 </template>
 
 <style scoped>
+.nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  text-decoration: underline;
+}
+
 .profile-page {
   min-height: 100vh;
   background-color: #ffffff;
@@ -498,11 +516,17 @@ const animateCopySuccess = () => {
   border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.2s ease;
+  transform-origin: center;
 }
 
 .change-password-link:hover {
   background-color: #333;
+  transform: scale(1.05) translateY(-2px);
+}
+
+.change-password-link:active {
+  transform: scale(0.98);
 }
 </style>
 

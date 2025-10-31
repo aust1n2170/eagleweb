@@ -4,6 +4,9 @@ import Home from '../views/Home.vue'
 import Profile from '../views/Profile.vue'
 import ChangePassword from '../views/ChangePassword.vue'
 import ResetPassword from '../views/ResetPassword.vue'
+import MenuItemDetail from '../views/MenuItemDetail.vue'
+import DiningHall from '../views/DiningHall.vue'
+import BrowseDiningHalls from '../views/BrowseDiningHalls.vue'
 
 const routes = [
   {
@@ -24,6 +27,23 @@ const routes = [
         path: 'change-password',
         name: 'ChangePassword',
         component: ChangePassword
+      },
+      {
+        path: 'dish/:recipeNumber',
+        name: 'MenuItemDetail',
+        component: MenuItemDetail,
+        props: true
+      },
+      {
+        path: 'hall/:hallName',
+        name: 'DiningHall',
+        component: DiningHall,
+        props: true
+      },
+      {
+        path: 'browse',
+        name: 'BrowseDiningHalls',
+        component: BrowseDiningHalls
       }
     ]
   },
