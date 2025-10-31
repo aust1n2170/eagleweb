@@ -1,0 +1,178 @@
+@font-face {
+    font-family: "SubVario OT W03 Medium";
+    src: url("https://db.onlinewebfonts.com/t/e37f34951ba27e50e0b296fd14f33d62.eot");
+    src: url("https://db.onlinewebfonts.com/t/e37f34951ba27e50e0b296fd14f33d62.eot?#iefix") format("embedded-opentype"),
+    url("https://db.onlinewebfonts.com/t/e37f34951ba27e50e0b296fd14f33d62.woff2") format("woff2"),
+    url("https://db.onlinewebfonts.com/t/e37f34951ba27e50e0b296fd14f33d62.woff") format("woff"),
+    url("https://db.onlinewebfonts.com/t/e37f34951ba27e50e0b296fd14f33d62.ttf") format("truetype"),
+    url("https://db.onlinewebfonts.com/t/e37f34951ba27e50e0b296fd14f33d62.svg#SubVario OT W03 Medium") format("svg");
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "SubVario OT W03 Medium", system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: #ffffff;
+  color: #000000;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.navbar {
+  background-color: #000000;
+  color: #ffffff;
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+  border-radius: 8px;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.nav-button {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.nav-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+  z-index: -1;
+}
+
+.nav-button:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.nav-button.login {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+}
+
+.nav-button.login:hover {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.nav-button.signup {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.nav-button.signup:hover {
+  background-color: #e0e0e0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: slideInRight 0.5s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.user-email {
+  color: #ffffff;
+  font-size: 0.9rem;
+  animation: fadeIn 0.6s ease-out 0.2s both;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.user-email:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.nav-button.logout {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+}
+
+.nav-button.logout:hover {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.success-message {
+  background-color: #4caf50;
+  color: #ffffff;
+  padding: 1rem 2rem;
+  margin: 1rem auto;
+  border-radius: 6px;
+  max-width: 1280px;
+  text-align: center;
+  animation: slideDown 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+#app {
+  min-height: 100vh;
+}
